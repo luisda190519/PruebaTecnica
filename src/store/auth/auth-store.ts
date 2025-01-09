@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   setStep: (step) => set({ step }),
   
-  setPhone: (value) => set((state) => ({
+  setPhone: (value) => set(() => ({
     phone: {
       value,
       isValid: /^\+57\s?3\d{2}\s?\d{3}\s?\d{4}$/.test(value.trim()),
