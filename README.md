@@ -55,8 +55,6 @@ npm run test
 # Ejecutar pruebas unitarias
 npm run test
 
-# Ver cobertura de pruebas
-npm run test:coverage
 ```
 
 ## Contacto
