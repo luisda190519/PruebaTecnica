@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useAuthStore } from '@/store/auth/auth-store';
 
-// Improve the type safety
 export type PhoneNumber = `+57${number}`;
 
 export function usePhoneValidation() {
@@ -24,33 +23,49 @@ export function usePhoneValidation() {
     }
 
     setError(null);
-    // Update global state when validation passes
     setPhone(cleanNumber as PhoneNumber);
     return true;
   }, [setPhone]);
 
   const formatNumber = useCallback((input: string) => {
+    // Remove all non-digits first
     const cleanNumber = input.replace(/\D/g, '');
-    if (cleanNumber.length <= 0) return '';
-    if (cleanNumber.length <= 2) return `+${cleanNumber}`;
-    if (cleanNumber.length <= 5) return `+${cleanNumber.slice(0, 2)} ${cleanNumber.slice(2)}`;
-    if (cleanNumber.length <= 8) return `+${cleanNumber.slice(0, 2)} ${cleanNumber.slice(2, 5)} ${cleanNumber.slice(5)}`;
-    return `+${cleanNumber.slice(0, 2)} ${cleanNumber.slice(2, 5)} ${cleanNumber.slice(5, 8)} ${cleanNumber.slice(8, 10)}`;
+    
+    // Early return for empty input
+    if (cleanNumber.length === 0) return '';
+    
+    // Add the country code if not present
+    const withCountryCode = cleanNumber.startsWith('57') ? cleanNumber : `57${cleanNumber}`;
+    
+    // Format the number in groups
+    const groups = [
+      '+57',
+      withCountryCode.slice(2, 5),
+      withCountryCode.slice(5, 8),
+      withCountryCode.slice(8, 12)
+    ];
+    
+    // Join only non-empty groups with spaces
+    return groups.filter(Boolean).join(' ');
   }, []);
+
+  const handleSetValue = useCallback((input: string) => {
+    const formatted = formatNumber(input);
+    setValue(formatted);
+    
+    // Only validate complete numbers
+    if (formatted.replace(/\s+/g, '').length >= 12) {
+      validate(formatted);
+    } else {
+      setError(null);
+    }
+  }, [formatNumber, validate]);
 
   return {
     value,
-    setValue: (input: string) => {
-      const formatted = formatNumber(input);
-      setValue(formatted);
-      if (formatted.length >= 13) {
-        validate(formatted);
-      } else {
-        setError(null);
-      }
-    },
+    setValue: handleSetValue,
     error,
     validate,
-    isValid: !error && value.length >= 13
+    isValid: !error && value.replace(/\s+/g, '').length >= 12
   };
 }
